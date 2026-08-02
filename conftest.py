@@ -1,19 +1,7 @@
 import pytest
-from helpers import DataGeneration
 from endpoint_executions import *
 from api_client import ApiClient
-
-@pytest.fixture
-def get_courier_data():
-    return DataGeneration().get_courier_data_for_signup()
-
-@pytest.fixture
-def get_courier_data_without_login():
-    return DataGeneration().get_courier_data_without_login()
-
-@pytest.fixture
-def get_payload_for_new_order():
-    return DataGeneration().get_payload_for_new_order_no_colors()
+import allure
 
 @pytest.fixture
 def api_client():
@@ -34,7 +22,8 @@ def new_courier_with_cleanup(new_courier, courier_id):
     try:
         delete_courier(courier_id_to_delete)
     except Exception as ex:
-        print(f'Failed to delete courier with id: {courier_id}, error: {ex}')
+        message = f'Failed to delete courier with id: {courier_id}, error: {ex}'
+        allure.attach(message, name='Error during cleanup', attachment_type=allure.attachment_type.TEXT)
 
 @pytest.fixture
 def courier_id_with_cleanup(courier_id):
@@ -43,4 +32,13 @@ def courier_id_with_cleanup(courier_id):
     try:
         delete_courier(courier_id_to_delete)
     except Exception as ex:
-        print(f'Failed to delete courier with id: {courier_id}, error: {ex}')
+        message = f'Failed to delete courier with id: {courier_id}, error: {ex}'
+        allure.attach(message, name='Error during cleanup', attachment_type=allure.attachment_type.TEXT)
+
+@pytest.fixture
+def cleanup_courier_from_signup(api_client):
+    list_to_cleanup = []
+    yield list_to_cleanup
+    for item in list_to_cleanup:
+        courier_id = api_client.return_id_for_registered_courier(item)
+        delete_courier(courier_id['courierId'])

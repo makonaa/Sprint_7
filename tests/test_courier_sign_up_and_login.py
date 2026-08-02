@@ -1,18 +1,17 @@
 from data import *
 from endpoint_executions import *
 import allure
+from helpers import DataGeneration
 
 
 class TestCourierSignUp:
 
     @allure.title('Проверка успешной регистрации курьера')
-    def test_create_courier_successful(self, get_courier_data, api_client):
-        try:
-            response = create_courier(get_courier_data)
-            assert response.status_code == 201 and response.text == '{"ok":true}'
-        finally:
-            id_to_delete = api_client.return_id_for_registered_courier(get_courier_data)
-            delete_courier(id_to_delete['courierId'])
+    def test_create_courier_successful(self, api_client, cleanup_courier_from_signup):
+        courier_data = DataGeneration().get_courier_data_for_signup()
+        response = create_courier(courier_data)
+        cleanup_courier_from_signup.append(courier_data)
+        assert response.status_code == 201 and response.text == '{"ok":true}'
 
     @allure.title('Проверка, что API возвращает ошибку, если происходит попытка повторной регистрации')
     def test_multiple_signups_with_same_data_returns_error(self, new_courier_with_cleanup):
@@ -21,8 +20,8 @@ class TestCourierSignUp:
         assert response.status_code == 409 and error_message == 'Этот логин уже используется. Попробуйте другой.'
 
     @allure.title('Проверка, что API возвращает ошибку, если запрос регистрации не содержит имени логина')
-    def test_courier_sign_up_without_login_returns_error(self, get_courier_data_without_login):
-        response = create_courier(get_courier_data_without_login)
+    def test_courier_sign_up_without_login_returns_error(self):
+        response = create_courier(DataGeneration().get_courier_data_without_login())
         error_message = response.json()['message']
         assert response.status_code == 400 and error_message == 'Недостаточно данных для создания учетной записи'
 

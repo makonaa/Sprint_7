@@ -1,6 +1,7 @@
 from endpoint_executions import *
 from helpers import DataGeneration
 import allure
+from custom_exceptions import *
 
 class ApiClient:
     def __init__(self):
@@ -14,7 +15,10 @@ class ApiClient:
             del payload['firstName']
             return payload
         else:
-            raise Exception("Failed to register new courier")
+            raise FailedToRegisterCourier(
+                "Failed to register new courier"
+                f'Error code: {response.status_code}, payload: {response.text}'
+            )
 
     @allure.step('Возвращаем id уже зарегистрированного курьера')
     def return_id_for_registered_courier(self, courier_data: dict) -> dict:
@@ -25,7 +29,10 @@ class ApiClient:
             }
             return courier_id
         else:
-            raise Exception("Failed to login with existing courier")
+            raise FailedToLoginCourier(
+                "Failed to login with existing courier"
+                f'Error code: {response_with_id.status_code}, payload: {response_with_id.text}'
+            )
 
     @allure.step('Создаем новый заказ и возвращаем его трек-номер')
     def create_order_and_return_track_number(self) -> dict:
@@ -37,7 +44,10 @@ class ApiClient:
             }
             return track
         else:
-            raise Exception("Failed to create new order")
+            raise FailedToCreateOrder(
+                "Failed to create new order"
+                f'Error code: {response.status_code}, payload: {response.text}'
+            )
 
     @allure.step('Возвращаем id заказа по его трек-номеру')
     def return_order_id_by_track_number(self, query: dict) -> int:
@@ -46,4 +56,7 @@ class ApiClient:
             order_id = response.json()['order']['id']
             return order_id
         else:
-            raise Exception('Failed to get order id by track number')
+            raise FailedToGetOrderId(
+                'Failed to get order id by track number'
+                f'Error code: {response.status_code}, payload: {response.text}'
+            )
